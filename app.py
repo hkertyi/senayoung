@@ -1,3 +1,17 @@
+import sys
+import subprocess
+import streamlit as st
+import random
+from collections import Counter
+import matplotlib.pyplot as plt
+
+# EXE 실행 시 자동으로 streamlit run 실행
+if getattr(sys, 'frozen', False):
+    subprocess.Popen([sys.executable, "-m", "streamlit", "run", sys.argv[0]])
+    sys.exit()
+
+# 확률과 캐릭터 이름 설정
+probabilities = {
     '구세나': {'prob': 0.0008001, 'characters': ['파이', '로지', '쥬리']},
     '전설': {'prob': 0.006545, 'characters': ['테오', '바네사', '스파이크', '제이브', '레이첼', '아일린', '델론즈', '크리스', '루디', '실베스타', '에이스']},
     '준전설': {'prob': 0.0120003, 'characters': ['타카', '파스칼', '아라곤', '엘리스', '발리스타', '챈슬러', '룩', '지크', '세인', '에스파다', '니아', '루리', '벨리카', '리나', '비담', '유신', '녹스']},
@@ -60,24 +74,3 @@ if st.button("시뮬레이션 시작"):
 
     # 등급 우선순위 기준으로 정렬
     sorted_chars = sorted(total_counter.items(), key=lambda x: (grade_priority[char_to_grade[x[0]]], -x[1]))
-
-    # 등급별 색깔 입혀서 출력
-    for char, count in sorted_chars:
-        grade = char_to_grade[char]
-        color = grade_color[grade]
-        ratio = count / (batch_size*num_batches) * 100
-        st.markdown(f"<span style='color:{color}; font-weight:bold;'>{char}</span>: {count}회, 비율: {ratio:.4f}%", unsafe_allow_html=True)
-
-    # 구세나 캐릭터들만 뽑아서 등장 횟수 분포 시각화
-    guse_na_chars = probabilities['구세나']['characters']
-    guse_na_counts = []
-    for counts in batch_counts:
-        count = sum(counts.get(char, 0) for char in guse_na_chars)
-        guse_na_counts.append(count)
-
-    fig, ax = plt.subplots()
-    ax.hist(guse_na_counts, bins=range(max(guse_na_counts)+2), color='coral', edgecolor='black', align='left')
-    ax.set_title(f'{batch_size}회 합성 중 구세나(파이, 로지, 쥬리) 등장 횟수 분포 ({num_batches}번 반복)')
-    ax.set_xlabel('한 배치 내 구세나 등장 횟수')
-    ax.set_ylabel('빈도수')
-    st.pyplot(fig)
