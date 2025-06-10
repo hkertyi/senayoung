@@ -1,8 +1,8 @@
 import sys
 import subprocess
-import streamlit as st
 import random
 from collections import Counter
+import streamlit as st
 import matplotlib.pyplot as plt
 
 # EXE 실행 시 자동으로 streamlit run 실행
@@ -36,13 +36,13 @@ grade_priority = {
 grade_color = {
     '구세나': 'red',
     '전설': 'orange',
-    '준전설': 'purple',  # 보라색으로 변경
+    '준전설': 'purple',  # 보라색
     '희귀': 'gray',
 }
 
-def simulate_batch(prob_dict, batch_size=100):
-    grades = list(prob_dict.keys())
-    probs = [prob_dict[grade]['prob'] for grade in grades]
+def simulate_batch(probabilities, batch_size=100):
+    grades = list(probabilities.keys())
+    probs = [probabilities[grade]['prob'] for grade in grades]
     results = []
     for _ in range(batch_size):
         r = random.random()
@@ -50,7 +50,7 @@ def simulate_batch(prob_dict, batch_size=100):
         for grade, p in zip(grades, probs):
             cumulative += p
             if r < cumulative:
-                char = random.choice(prob_dict[grade]['characters'])
+                char = random.choice(probabilities[grade]['characters'])
                 results.append(char)
                 break
     return results
@@ -74,3 +74,24 @@ if st.button("시뮬레이션 시작"):
 
     # 등급 우선순위 기준으로 정렬
     sorted_chars = sorted(total_counter.items(), key=lambda x: (grade_priority[char_to_grade[x[0]]], -x[1]))
+
+    # 등급별 색깔 입혀서 출력
+    for char, count in sorted_chars:
+        grade = char_to_grade[char]
+        color = grade_color[grade]
+        ratio = count / (batch_size*num_batches) * 100
+        st.markdown(f"<span style='color:{color}; font-weight:bold;'>{char}</span>: {count}회, 비율: {ratio:.4f}%", unsafe_allow_html=True)
+
+    # 구세나 캐릭터들만 뽑아서 등장 횟수 분포 시각화
+    guse_na_chars = probabilities['구세나']['characters']
+    guse_na_counts = []
+    for counts in batch_counts:
+        count = sum(counts.get(char, 0) for char in guse_na_chars)
+        guse_na_counts.append(count)
+
+    fig, ax = plt.subplots()
+    ax.hist(guse_na_counts, bins=range(max(guse_na_counts)+2), color='coral', edgecolor='black', align='left')
+    ax.set_title(f'{batch_size}회 합성 중 구세나(파이, 로지, 쥬리) 등장 횟수 분포 ({num_batches}번 반복)')
+    ax.set_xlabel('한 배치 내 구세나 등장 횟수')
+    ax.set_ylabel('빈도수')
+    st.pyplot(fig)
